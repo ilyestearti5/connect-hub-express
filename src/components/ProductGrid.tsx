@@ -1,58 +1,5 @@
 import ProductCard from "./ProductCard";
-import wirelessAdapter from "@/assets/wireless-adapter.png";
-import usbHub from "@/assets/usb-hub.png";
-import carAdapter from "@/assets/car-adapter.png";
-import hdmiAdapter from "@/assets/hdmi-adapter.png";
-import travelDock from "@/assets/travel-dock.png";
-
-const products = [
-  {
-    id: 1,
-    name: "Universal Wireless Display & Car Adapter Kit",
-    price: 49.99,
-    originalPrice: 69.99,
-    image: wirelessAdapter,
-    rating: 4.8,
-    reviews: 234,
-    badge: "Best Seller",
-  },
-  {
-    id: 2,
-    name: "7-in-1 USB-C Hub Pro",
-    price: 59.99,
-    image: usbHub,
-    rating: 4.9,
-    reviews: 512,
-    badge: "Popular",
-  },
-  {
-    id: 3,
-    name: "Bluetooth 5.0 Car Receiver",
-    price: 29.99,
-    originalPrice: 39.99,
-    image: carAdapter,
-    rating: 4.7,
-    reviews: 189,
-  },
-  {
-    id: 4,
-    name: "USB-C to HDMI 4K Adapter",
-    price: 24.99,
-    image: hdmiAdapter,
-    rating: 4.6,
-    reviews: 342,
-  },
-  {
-    id: 5,
-    name: "Compact Travel Dock Station",
-    price: 79.99,
-    originalPrice: 99.99,
-    image: travelDock,
-    rating: 4.9,
-    reviews: 156,
-    badge: "New",
-  },
-];
+import { products } from "@/data/products";
 
 const ProductGrid = () => {
   return (
