@@ -379,7 +379,7 @@ const ProductDetail = () => {
                         <SelectContent>
                           {deliveryPrices.map((price) => (
                             <SelectItem key={price.id} value={price.id!}>
-                              {price.name} - ${price.price.toFixed(2)}
+                              {price.name} - {price.price.toFixed(2)}DZD
                             </SelectItem>
                           ))}
                         </SelectContent>
