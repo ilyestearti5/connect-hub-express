@@ -1,39 +1,65 @@
+import { useState, useEffect } from "react";
 import ProductCard from "./ProductCard";
-import { products } from "@/data/products";
+import { snapBuyAPI } from "@/lib/api";
+import { Biqpod } from "@biqpod/app/ui/types";
 
 const ProductGrid = () => {
+  const [products, setProducts] = useState<Biqpod.Snapbuy.Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await snapBuyAPI.getProducts(10);
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="bg-background py-20" id="products">
+        <div className="mx-auto px-4 container">
+          <div className="text-center">Loading products...</div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="py-20 bg-background" id="products">
-      <div className="container mx-auto px-4">
+    <section className="bg-background py-20" id="products">
+      <div className="mx-auto px-4 container">
         {/* Section Header */}
-        <div className="text-center mb-12 space-y-4">
-          <span className="text-primary font-semibold text-sm uppercase tracking-wider">
+        <div className="space-y-4 mb-12 text-center">
+          <span className="font-semibold text-primary text-sm uppercase tracking-wider">
             Featured Collection
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+          <h2 className="font-bold text-foreground text-3xl md:text-4xl">
             Top-Selling Connectivity Gear
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Discover our most popular USB hubs, wireless adapters, and car tech accessories trusted by thousands.
+          <p className="mx-auto max-w-2xl text-muted-foreground">
+            Discover our most popular USB hubs, wireless adapters, and car tech
+            accessories trusted by thousands.
           </p>
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div className="gap-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {products.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              {...product}
-              delay={index * 0.1}
-            />
+            <ProductCard key={product.id} {...product} delay={index * 0.1} />
           ))}
         </div>
 
         {/* View All Button */}
-        <div className="text-center mt-12">
+        <div className="mt-12 text-center">
           <a
             href="#"
-            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold transition-colors"
+            className="inline-flex items-center gap-2 font-semibold text-primary hover:text-primary/80 transition-colors"
           >
             View All Products
             <svg

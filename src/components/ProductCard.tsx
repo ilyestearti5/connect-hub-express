@@ -1,106 +1,112 @@
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Star } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-
-interface ProductCardProps {
-  name: string;
-  slug: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  rating: number;
-  reviews: number;
-  badge?: string;
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { Biqpod } from "@biqpod/app/ui/types";
+interface ProductCardProps extends Biqpod.Snapbuy.Product {
   delay?: number;
 }
-
 const ProductCard = ({
+  id,
   name,
-  slug,
-  price,
-  originalPrice,
-  image,
-  rating,
-  reviews,
-  badge,
+  files,
+  single,
+  multiple,
+  type,
   delay = 0,
+  metaData,
 }: ProductCardProps) => {
+  const { dispatch } = useCart();
+  const {
+    state: { user },
+  } = useAuth();
+  const image = files?.[0]?.url || "";
+  const slug = id || "";
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    let price = 0;
+    if (type === "single") {
+      price = Number(
+        (user && user.status === "accepted"
+          ? single?.customer
+          : single?.client) || 0
+      );
+    } else if (type === "multiple" && multiple?.prices?.length) {
+      // Use the lowest price for cart
+      const lowest = Math.min(...multiple.prices.map((p) => p.price));
+      price = lowest;
+    }
+    dispatch({
+      type: "ADD_ITEM",
+      payload: { id: Number(id) || 0, slug, name: name || "", price, image },
+    });
     toast.success(`${name} added to cart!`, {
       description: "Continue shopping or proceed to checkout.",
     });
   };
-
+  const badge = !!metaData?.badge;
   return (
-    <Link 
+    <Link
       to={`/product/${slug}`}
-      className="product-card group animate-fade-in-up block"
+      className="group block animate-fade-in-up product-card"
       style={{ animationDelay: `${delay}s` }}
     >
       {/* Image Container */}
-      <div className="relative aspect-square bg-gradient-to-br from-secondary/50 to-background p-6 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-secondary/50 to-background p-6 aspect-square overflow-hidden">
         {badge && (
-          <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full z-10">
+          <span className="top-4 left-4 z-10 absolute bg-primary px-3 py-1.5 rounded-full font-semibold text-primary-foreground text-xs">
             {badge}
           </span>
         )}
-        
         <img
           src={image}
           alt={name}
-          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
         />
-
         {/* Quick Add Overlay */}
-        <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-300 flex items-end justify-center p-4 opacity-0 group-hover:opacity-100">
-          <Button variant="cart" onClick={handleAddToCart} className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+        <div className="absolute inset-0 flex justify-center items-end bg-foreground/0 group-hover:bg-foreground/5 opacity-0 group-hover:opacity-100 p-4 transition-colors duration-300">
+          <Button
+            variant="cart"
+            onClick={handleAddToCart}
+            className="transition-transform translate-y-4 group-hover:translate-y-0 duration-300"
+          >
             <ShoppingCart className="w-4 h-4" />
             Add to Cart
           </Button>
         </div>
       </div>
-
       {/* Content */}
-      <div className="p-5 space-y-3">
-        {/* Rating */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`w-4 h-4 ${
-                  i < Math.floor(rating)
-                    ? "fill-primary text-primary"
-                    : "fill-muted text-muted"
-                }`}
-              />
-            ))}
-          </div>
-          <span className="text-sm text-muted-foreground">({reviews})</span>
-        </div>
-
+      <div className="space-y-3 p-5">
         {/* Title */}
-        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+        <h3 className="font-semibold text-foreground group-hover:text-primary line-clamp-2 transition-colors">
           {name}
         </h3>
-
         {/* Price */}
         <div className="flex items-center gap-3">
-          <span className="text-xl font-bold text-foreground">
-            ${price.toFixed(2)}
-          </span>
-          {originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">
-              ${originalPrice.toFixed(2)}
+          {type === "single" ? (
+            <span className="font-bold text-foreground text-xl">
+              {Number(
+                (user && user.status === "accepted"
+                  ? single?.customer
+                  : single?.client) || 0
+              ).toFixed(2)}
+              DZD
             </span>
-          )}
+          ) : type === "multiple" && multiple?.prices ? (
+            <ul className="space-y-1 text-muted-foreground text-sm">
+              {multiple.prices.map((p, index) => (
+                <li key={index}>
+                  Buy {p.quantity} by {(p.quantity * p.price).toFixed(2)}DZD
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </div>
     </Link>
   );
 };
-
 export default ProductCard;
