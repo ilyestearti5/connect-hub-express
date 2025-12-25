@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Star } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 interface ProductCardProps {
   name: string;
+  slug: string;
   price: number;
   originalPrice?: number;
   image: string;
@@ -15,6 +17,7 @@ interface ProductCardProps {
 
 const ProductCard = ({
   name,
+  slug,
   price,
   originalPrice,
   image,
@@ -23,15 +26,18 @@ const ProductCard = ({
   badge,
   delay = 0,
 }: ProductCardProps) => {
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     toast.success(`${name} added to cart!`, {
       description: "Continue shopping or proceed to checkout.",
     });
   };
 
   return (
-    <div 
-      className="product-card group animate-fade-in-up"
+    <Link 
+      to={`/product/${slug}`}
+      className="product-card group animate-fade-in-up block"
       style={{ animationDelay: `${delay}s` }}
     >
       {/* Image Container */}
@@ -93,7 +99,7 @@ const ProductCard = ({
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
