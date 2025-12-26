@@ -3,43 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      CONNECT HUB | Premium USB Hubs, Wireless Adapters & Connectivity
-      Accessories
-    </title>
+    <!-- Primary SEO -->
     <meta
       name="description"
-      content="Shop premium USB-C hubs, wireless display adapters, and car tech accessories at CONNECT HUB."
+      content="Connect Hub — a modern e-commerce demo store featuring curated products and fast checkout. Discover deals and new arrivals."
     />
-    <meta name="author" content="CONNECT HUB" />
     <meta
       name="keywords"
-      content="USB hub, USB-C dock, wireless adapter, car bluetooth, connectivity accessories, HDMI adapter, travel dock"
+      content="ecommerce, online store, shopping, products, connect hub, web shop, buy online"
     />
-    <link rel="canonical" href="https://connecthub.com" />
-
-    <meta
-      property="og:title"
-      content="CONNECT HUB | Premium Connectivity Accessories"
-    />
+    <meta name="author" content="Connect Hub" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0ea5a4" />
+    <link rel="canonical" href="https://connect-hub-steel.vercel.app/" />
+    <!-- Open Graph / Facebook -->
+    <meta property="og:title" content="Connect Hub — Modern e-commerce demo" />
     <meta
       property="og:description"
-      content="Shop premium USB-C hubs, wireless display adapters, and car tech accessories."
+      content="Shop curated products at Connect Hub. Fast, reliable, and user-friendly shopping experience."
     />
     <meta property="og:type" content="website" />
-    <meta
-      property="og:image"
-      content="https://lovable.dev/opengraph-image-p98pqg.png"
-    />
-
+    <meta property="og:url" content="https://connect-hub-steel.vercel.app/" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:site_name" content="Connect Hub" />
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@ConnectHub" />
+    <meta name="twitter:title" content="Connect Hub — Modern e-commerce demo" />
     <meta
-      name="twitter:image"
-      content="https://lovable.dev/opengraph-image-p98pqg.png"
+      name="twitter:description"
+      content="Shop curated products at Connect Hub. Fast, reliable, and user-friendly shopping experience."
     />
+    <meta name="twitter:image" content="/og-image.png" />
+    <meta name="twitter:site" content="@YourTwitterHandle" />
+    <!-- Structured data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Connect Hub",
+        "url": "https://connect-hub-steel.vercel.app/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://connect-hub-steel.vercel.app/products?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
   </head>
-
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

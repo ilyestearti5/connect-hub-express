@@ -13,12 +13,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, Plus, Minus } from "lucide-react";
+import {
+  ChevronLeft,
+  Plus,
+  Minus,
+  Check,
+  User,
+  Phone,
+  MapPin,
+  Home,
+} from "lucide-react";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
 import { snapBuyAPI } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Biqpod } from "@biqpod/app/ui/types";
+import places from "../../public/places.json";
 const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const {
@@ -48,6 +58,8 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState<
     Biqpod.Snapbuy.Product[]
   >([]);
+  const [communes, setCommunes] = useState<any[]>([]);
+  const [selectedCommune, setSelectedCommune] = useState<string>("");
   useEffect(() => {
     const fetchProduct = async () => {
       if (!slug) return;
@@ -73,7 +85,6 @@ const ProductDetail = () => {
     fetchProduct();
     fetchRelatedProducts();
   }, [slug]);
-
   useEffect(() => {
     const fetchDeliveryOptions = async () => {
       try {
@@ -82,7 +93,6 @@ const ProductDetail = () => {
           (option) => option.enabled !== false
         );
         setDeliveryOptions(enabledOptions);
-
         // Fetch all delivery prices upfront
         setDeliveryLoading(true);
         const pricesPromises = enabledOptions.map(async (option) => {
@@ -97,7 +107,6 @@ const ProductDetail = () => {
             return { optionId: option.id!, prices: [] };
           }
         });
-
         const results = await Promise.all(pricesPromises);
         const pricesMap: Record<string, Biqpod.Snapbuy.DeliveryPrice[]> = {};
         results.forEach(({ optionId, prices }) => {
@@ -112,7 +121,10 @@ const ProductDetail = () => {
     };
     fetchDeliveryOptions();
   }, []);
-
+  useEffect(() => {
+    const option = deliveryOptions.at(0);
+    setSelectedDeliveryOption(option?.id! || "");
+  }, [deliveryOptions]);
   useEffect(() => {
     if (selectedDeliveryOption) {
       setDeliveryPrices(allDeliveryPrices[selectedDeliveryOption] || []);
@@ -122,6 +134,25 @@ const ProductDetail = () => {
       setSelectedDeliveryPrice("");
     }
   }, [selectedDeliveryOption, allDeliveryPrices]);
+  useEffect(() => {
+    if (selectedDeliveryPrice) {
+      const selectedPrice = deliveryPrices.find(
+        (p) => p.id === selectedDeliveryPrice
+      );
+      if (selectedPrice) {
+        const filtered = places.filter(
+          (p) =>
+            p.wilaya_name_ascii.toLowerCase() ===
+            selectedPrice.name.toLowerCase()
+        );
+        setCommunes(filtered);
+        setSelectedCommune("");
+      }
+    } else {
+      setCommunes([]);
+      setSelectedCommune("");
+    }
+  }, [selectedDeliveryPrice, deliveryPrices]);
   const getPrice = (prod: Biqpod.Snapbuy.Product, qty: number) => {
     if (prod.type === "single") {
       return user && user.status === "accepted"
@@ -142,15 +173,13 @@ const ProductDetail = () => {
         return ((highestPrice - currentPrice) / highestPrice) * 100;
       })()
     : 0;
-
   const selectedDeliveryPriceObj = deliveryPrices.find(
     (p) => p.id === selectedDeliveryPrice
   );
   const deliveryCost = selectedDeliveryPriceObj
     ? selectedDeliveryPriceObj.price
     : 0;
-  const totalPrice = currentPrice + deliveryCost;
-
+  const totalPrice = currentPrice * quantity + deliveryCost;
   if (loading) {
     return (
       <div className="bg-background min-h-screen">
@@ -193,7 +222,8 @@ const ProductDetail = () => {
       !lastname ||
       !phone ||
       !selectedDeliveryOption ||
-      !selectedDeliveryPrice
+      !selectedDeliveryPrice ||
+      !selectedCommune
     ) {
       toast.error("Please fill in all fields.");
       return;
@@ -216,6 +246,7 @@ const ProductDetail = () => {
           optionId: selectedDeliveryOption,
           priceId: selectedDeliveryPrice,
           cost: deliveryCost,
+          commune: selectedCommune,
         },
         // Add other required fields as per API
       };
@@ -246,6 +277,35 @@ const ProductDetail = () => {
             <span className="text-foreground">{product.name}</span>
           </nav>
         </div>
+        {/* Marquee */}
+        <section className="bg-black py-2 overflow-hidden text-white">
+          <style>
+            {`
+              @keyframes marquee {
+                0% { transform: translateX(100%); }
+                100% { transform: translateX(-100%); }
+              }
+              .animate-marquee {
+                animation: marquee 15s linear infinite;
+              }
+              @keyframes bounce-every-5s {
+                0% { transform: translateY(0); }
+                1% { transform: translateY(-10px); }
+                2% { transform: translateY(0); }
+                100% { transform: translateY(0); }
+              }
+              .animate-bounce-every-5s {
+                animation: bounce-every-5s 5s infinite;
+              }
+            `}
+          </style>
+          <div className="font-semibold text-lg whitespace-nowrap animate-marquee">
+            📦 Product: {product.name} | 📝 Description:{" "}
+            {product.description || "Nothing"} | 💰 Price:{" "}
+            {totalPrice.toFixed(2)} DZD | 🔢 Quantity: {quantity} | 💸 Savings:{" "}
+            {savings > 0 ? `${savings.toFixed(0)}%` : "None"}
+          </div>
+        </section>
         {/* Product Section */}
         <section className="mx-auto px-4 py-8 container">
           <div className="gap-12 grid lg:grid-cols-2">
@@ -272,7 +332,7 @@ const ProductDetail = () => {
                 </span>
                 {product.multiple && savings > 0 && (
                   <span className="font-semibold text-green-600">
-                    Save {savings.toFixed(0)}%
+                    Save {savings.toFixed(0)}% for one
                   </span>
                 )}
               </div>
@@ -320,75 +380,146 @@ const ProductDetail = () => {
                   <div className="gap-4 grid grid-cols-2">
                     <div>
                       <Label htmlFor="firstname">First Name</Label>
-                      <Input
-                        id="firstname"
-                        value={firstname}
-                        onChange={(e) => setFirstname(e.target.value)}
-                        placeholder="Enter first name"
-                      />
+                      <div className="relative">
+                        <User className="top-1/2 left-3 absolute w-4 h-4 text-muted-foreground -translate-y-1/2 transform" />
+                        <Input
+                          id="firstname"
+                          value={firstname}
+                          onChange={(e) => setFirstname(e.target.value)}
+                          placeholder="Enter first name"
+                          className="pl-10"
+                        />
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="lastname">Last Name</Label>
-                      <Input
-                        id="lastname"
-                        value={lastname}
-                        onChange={(e) => setLastname(e.target.value)}
-                        placeholder="Enter last name"
-                      />
+                      <div className="relative">
+                        <User className="top-1/2 left-3 absolute w-4 h-4 text-muted-foreground -translate-y-1/2 transform" />
+                        <Input
+                          id="lastname"
+                          value={lastname}
+                          onChange={(e) => setLastname(e.target.value)}
+                          placeholder="Enter last name"
+                          className="pl-10"
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Enter phone number"
-                    />
+                    <div className="relative">
+                      <Phone className="top-1/2 left-3 absolute w-4 h-4 text-muted-foreground -translate-y-1/2 transform" />
+                      <Input
+                        id="phone"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="Enter phone number"
+                        className="pl-10"
+                      />
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="deliveryOption">Delivery Option</Label>
-                    <Select
-                      value={selectedDeliveryOption}
-                      onValueChange={setSelectedDeliveryOption}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select delivery option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {deliveryOptions.map((option) => (
-                          <SelectItem key={option.id} value={option.id!}>
-                            {option.name} - {option.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 mt-2">
+                      {deliveryOptions.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => setSelectedDeliveryOption(option.id!)}
+                          disabled={deliveryLoading}
+                          aria-pressed={selectedDeliveryOption === option.id}
+                          className={`w-full text-left p-4 border rounded-lg transition-colors flex items-center justify-between ${
+                            selectedDeliveryOption === option.id
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border hover:shadow"
+                          }`}
+                        >
+                          <div>
+                            <div className="font-semibold text-foreground">
+                              {option.name}
+                            </div>
+                            {option.description && (
+                              <div className="text-muted-foreground text-sm">
+                                {option.description}
+                              </div>
+                            )}
+                          </div>
+                          {selectedDeliveryOption === option.id && (
+                            <Check className="w-5 h-5 text-primary" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   {deliveryPrices.length > 0 && (
                     <div>
                       <Label htmlFor="deliveryLocation">
                         Delivery Location
                       </Label>
-                      <Select
-                        value={selectedDeliveryPrice}
-                        onValueChange={setSelectedDeliveryPrice}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select wilaya" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {deliveryPrices.map((price) => (
-                            <SelectItem key={price.id} value={price.id!}>
-                              {price.name} - {price.price.toFixed(2)}DZD
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="relative">
+                        <MapPin className="top-1/2 left-3 z-10 absolute w-4 h-4 text-muted-foreground -translate-y-1/2 transform" />
+                        <Select
+                          value={selectedDeliveryPrice}
+                          onValueChange={setSelectedDeliveryPrice}
+                        >
+                          <SelectTrigger className="pl-10">
+                            <SelectValue placeholder="Select wilaya" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {deliveryPrices.map((price) => {
+                              return (
+                                <SelectItem
+                                  className="flex justify-between"
+                                  key={price.id}
+                                  value={price.id!}
+                                >
+                                  <span>{price.name} - </span>
+                                  <span className="italic">
+                                    {price.price} DZD
+                                  </span>
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                  {communes.length > 0 && (
+                    <div>
+                      <Label htmlFor="commune">Commune</Label>
+                      <div className="relative">
+                        <Home className="top-1/2 left-3 z-10 absolute w-4 h-4 text-muted-foreground -translate-y-1/2 transform" />
+                        <Select
+                          value={selectedCommune}
+                          onValueChange={setSelectedCommune}
+                        >
+                          <SelectTrigger className="pl-10">
+                            <SelectValue placeholder="Select commune" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {communes
+                              .sort((a, b) =>
+                                a.commune_name_ascii.localeCompare(
+                                  b.commune_name_ascii
+                                )
+                              )
+                              .map((commune, index) => (
+                                <SelectItem
+                                  key={index}
+                                  value={commune.commune_name_ascii}
+                                >
+                                  {commune.commune_name_ascii}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   )}
                   <Button
                     variant="hero"
-                    className="w-full"
+                    className="w-full animate-bounce-every-5s"
                     onClick={handleCreateOrder}
                     disabled={submitting}
                   >
