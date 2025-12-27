@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
-import { snapBuyAPI } from "@/lib/api";
+import { CreateOrderOptions, snapBuyAPI } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Biqpod } from "@biqpod/app/ui/types";
 import places from "../../public/places.json";
@@ -59,7 +59,7 @@ const ProductDetail = () => {
     Biqpod.Snapbuy.Product[]
   >([]);
   const [communes, setCommunes] = useState<any[]>([]);
-  const [selectedCommune, setSelectedCommune] = useState<string>("");
+  const [address, setSelectedCommune] = useState<string>("");
   useEffect(() => {
     const fetchProduct = async () => {
       if (!slug) return;
@@ -223,36 +223,44 @@ const ProductDetail = () => {
       !phone ||
       !selectedDeliveryOption ||
       !selectedDeliveryPrice ||
-      !selectedCommune
+      !address
     ) {
       toast.error("Please fill in all fields.");
       return;
     }
     setSubmitting(true);
+    var place: Biqpod.Snapbuy.Order["place"] | undefined = undefined;
     try {
-      const orderData = {
+      if (
+        selectedDeliveryOption === "domicile" ||
+        selectedDeliveryOption === "office"
+      ) {
+        place = {
+          address,
+          wilaya: selectedDeliveryPriceObj?.name.toString() || "",
+        };
+      }
+      const options: CreateOrderOptions = {
         products: {
-          [product.id || ""]: {
+          [product.id!]: {
             count: quantity,
-            price: Number(totalPrice),
           },
         },
-        customer: {
+        client: {
           firstname,
           lastname,
           phone,
         },
-        delivery: {
-          optionId: selectedDeliveryOption,
-          priceId: selectedDeliveryPrice,
-          cost: deliveryCost,
-          commune: selectedCommune,
-        },
-        // Add other required fields as per API
+        ...(place && { place }),
+        metaData: {},
+        packs: {},
       };
-      const result = await snapBuyAPI.createOrder(orderData);
+      if (selectedDeliveryPriceObj?.id) {
+        options.deliveryPriceId = selectedDeliveryPriceObj.id;
+      }
+      const response = await snapBuyAPI.createOrder(options);
       toast.success("Order created successfully!", {
-        description: `Order ID: ${result.order.id}`,
+        description: `Order ID: ${response.order.id}`,
       });
       // Optionally reset form or redirect
     } catch (error) {
@@ -377,7 +385,7 @@ const ProductDetail = () => {
               {/* Order Form */}
               <Card>
                 <CardContent className="space-y-4 pt-6">
-                  <div className="gap-4 grid grid-cols-2">
+                  <div className="gap-4 grid grid-cols-2 max-md:grid-cols-1">
                     <div>
                       <Label htmlFor="firstname">First Name</Label>
                       <div className="relative">
@@ -491,7 +499,7 @@ const ProductDetail = () => {
                       <div className="relative">
                         <Home className="top-1/2 left-3 z-10 absolute w-4 h-4 text-muted-foreground -translate-y-1/2 transform" />
                         <Select
-                          value={selectedCommune}
+                          value={address}
                           onValueChange={setSelectedCommune}
                         >
                           <SelectTrigger className="pl-10">
@@ -530,6 +538,31 @@ const ProductDetail = () => {
             </div>
           </div>
         </section>
+        {/* Additional Product Images */}
+        {product.files && product.files.length > 1 && (
+          <section className="mx-auto px-4 py-16 border-border border-t container">
+            <h2 className="mb-8 font-bold text-foreground text-2xl">
+              More Images
+            </h2>
+            <div className="flex flex-wrap justify-center items-center gap-4">
+              {product.files.slice(1).map((file, index) => (
+                <div
+                  key={index}
+                  className="group relative bg-gradient-to-br from-secondary to-background shadow-product p-4 border border-border rounded-lg overflow-hidden cursor-pointer"
+                >
+                  <img
+                    src={file.url}
+                    alt={`${product.name} - Image ${index + 2}`}
+                    className="rounded h-48 object-cover transition-transform"
+                  />
+                  <div className="top-2 right-2 absolute bg-black/50 px-2 py-1 rounded text-white text-xs">
+                    {index + 2}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <section className="mx-auto px-4 py-16 border-border border-t container">

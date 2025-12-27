@@ -1,6 +1,18 @@
-import { Biqpod } from "@biqpod/app/ui/types";
-const BASE_URL = "https://developed-nickie-biqpod-7b27f741.koyeb.app/snapbuy";
+import { Biqpod, SettingValueType } from "@biqpod/app/ui/types";
+const BASE_URL = true
+  ? "http://localhost:3000/snapbuy"
+  : "https://developed-nickie-biqpod-7b27f741.koyeb.app/snapbuy";
 const API_KEY = "snapbuy_client_c6330f10-36b3-4217-88c4-f8e05658cd64"; // Replace with actual key
+export interface CreateOrderOptions {
+  products: Biqpod.Snapbuy.Order["products"];
+  packs: Biqpod.Snapbuy.Order["packs"];
+  client: Biqpod.Snapbuy.Client;
+  metaData?: Record<string, SettingValueType>;
+  place?: Biqpod.Snapbuy.Order["place"];
+  deliveryPriceId?: string;
+  note?: string;
+}
+
 class SnapBuyAPI {
   private cache = new Map<string, { data: unknown; timestamp: number }>();
   private cacheDuration = 5 * 60 * 1000; // 5 minutes
@@ -97,7 +109,7 @@ class SnapBuyAPI {
     return this.request(`/orders/${orderId}`, { orderId }, token);
   }
   async createOrder(
-    orderData: any,
+    orderData: CreateOrderOptions,
     token?: string
   ): Promise<{ message: string; order: Biqpod.Snapbuy.Order }> {
     return this.request("/create-order", orderData, token);
