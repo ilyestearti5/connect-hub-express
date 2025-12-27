@@ -1,5 +1,5 @@
 import { Biqpod, SettingValueType } from "@biqpod/app/ui/types";
-const BASE_URL = true
+const BASE_URL = false
   ? "http://localhost:3000/snapbuy"
   : "https://developed-nickie-biqpod-7b27f741.koyeb.app/snapbuy";
 const API_KEY = "snapbuy_client_c6330f10-36b3-4217-88c4-f8e05658cd64"; // Replace with actual key
